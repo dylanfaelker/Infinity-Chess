@@ -1,0 +1,94 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+.App {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center; 
+  background-color: #0d2546;
+}
+
+.game {
+  margin: 20vmin;
+}
+
+.board-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center; 
+}
+
+.square-white {
+  min-height: 10vmin;
+  max-height: 10vmin;
+  min-width: 10vmin;
+  max-width: 10vmin;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center; 
+  background-color: #d4b187;
+  border: 1px solid #d4b187;
+}
+
+.square-black {
+  min-height: 10vmin;
+  max-height: 10vmin;
+  min-width: 10vmin;
+  max-width: 10vmin;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center; 
+  background-color: #613d11;
+  border: 1px solid #613d11;
+}
+
+.square-highlight {
+  min-height: 10vmin;
+  max-height: 10vmin;
+  min-width: 10vmin;
+  max-width: 10vmin;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center; 
+  background-color: #4aac2c;
+  border: 1px solid #367922;
+}
+
+.square-chosen {
+  min-height: 10vmin;
+  max-height: 10vmin;
+  min-width: 10vmin;
+  max-width: 10vmin;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center; 
+  background-color: #408b29;
+  border: 1px solid #2d631d;
+}
+
+.piece-img {
+  min-height: 9vmin;
+  max-height: 9vmin;
+  min-width: 9vmin;
+  max-width: 9vmin;
+}
+
+
