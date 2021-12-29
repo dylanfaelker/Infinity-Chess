@@ -678,15 +678,20 @@ class App extends React.Component {
         castling:changeCastle(this.state.selectedPiece[1], this.state.castling)
       })
     }
-    if(isOver(this.state.squares, this.state.turn, this.state.castling, this.state.enpassent)) {
+    console.log(this.state.squares)
+
+    var newSquares = pretendMove(square, this.state.selectedPiece[1], this.state.squares, this.state.enpassent)
+    if(isOver(newSquares, !this.state.turn, this.state.castling, this.state.enpassent)) {
      //do smth to stop play
-     if (inCheck(this.state.squares, this.state.turn, this.state.castling, this.state.enpassent)) {
+     if (inCheck(newSquares, !this.state.turn, this.state.castling, this.state.enpassent)) {
        //!turn wins
        console.log('checkmate')
      } else {
        //stalemate
        console.log('stalemate')
      }
+   } else {
+     console.log('not over')
    }
   }
 
@@ -976,6 +981,156 @@ function testMove(newSquare, oldSquare, squares, castling, enpassent, turn) {
   return !inCheckSafe(newSquares, turn, newCastling, newEnpassent)
 }
 
+function pretendMove(newSquare, oldSquare, squares, enpassent) {
+  var newSquares
+  if (isEnpassent(newSquare, oldSquare)) {//for enpassent moves
+    newSquares=squares.map((squareCheck) => {
+      if (squareCheck.id === newSquare.id) { 
+        //moves the piece to the new square
+        return {
+          id:squareCheck.id,
+          squareColor:squareCheck.squareColor,
+          piece: oldSquare.piece,
+          pieceColor: oldSquare.pieceColor,
+          icon: oldSquare.icon,
+        }
+      } else if  (squareCheck.id === oldSquare.id) {
+        //resets the square the piece is moving from
+        return {
+          id:squareCheck.id,
+          squareColor:squareCheck.squareColor,
+          piece: 0,
+          pieceColor: '',
+          icon: '',
+        }
+      } else if (squareCheck.id === enpassent) {
+        //deletes the pawn on enpassent square
+        return {
+          id:squareCheck.id,
+          squareColor:squareCheck.squareColor,
+          piece: 0,
+          pieceColor: '',
+          icon: '',
+        }
+      } else {
+        return {
+          id:squareCheck.id,
+          squareColor:squareCheck.squareColor,
+          piece: squareCheck.piece,
+          pieceColor: squareCheck.pieceColor,
+          icon: squareCheck.icon,
+        }
+      }
+    })
+  } else if(isCastle(newSquare, oldSquare)) { //for castling
+
+    var num=oldSquare.id
+    var oldId = 0
+    var newId = 0
+    if(oldSquare.pieceColor && num+2 === newSquare.id) { //white castle short
+      newId=62
+      oldId=64
+    } else if(oldSquare.pieceColor && num-2 === newSquare.id) {  //white castle long
+      newId=60
+      oldId=57
+    } else if(!oldSquare.pieceColor && num+2 === newSquare.id) { //black castle short
+      newId=6
+      oldId=8
+    } else { //black castle long
+      newId=4
+      oldId=1
+    }
+    var newRook = {
+      id:newId
+    }
+    var oldRook = {
+      id:oldId,
+      squareColor:getSquare(oldId, squares).squareColor,
+      piece: getSquare(oldId, squares).piece,
+      pieceColor: getSquare(oldId, squares).pieceColor,
+      icon: getSquare(oldId, squares).icon,
+    }
+
+    newSquares = squares.map((squareCheck) => {
+      if (squareCheck.id === newSquare.id) { 
+        //moves the piece to the new square
+        return {
+          id:squareCheck.id,
+          squareColor:squareCheck.squareColor,
+          piece: oldSquare.piece,
+          pieceColor: oldSquare.pieceColor,
+          icon: oldSquare.icon,
+        }
+      } else if  (squareCheck.id === oldSquare.id) {
+        //resets the square the piece is moving from
+        return {
+          id:squareCheck.id,
+          squareColor:squareCheck.squareColor,
+          piece: 0,
+          pieceColor: '',
+          icon: '',
+        }
+      } else if(squareCheck.id === oldRook.id) {
+        return {
+          id:squareCheck.id,
+          squareColor:squareCheck.squareColor,
+          piece: 0,
+          pieceColor: '',
+          icon: '',
+        }
+      } else if(squareCheck.id === newRook.id) {
+        return {
+          id:squareCheck.id,
+          squareColor:squareCheck.squareColor,
+          piece: oldRook.piece,
+          pieceColor: oldRook.pieceColor,
+          icon: oldRook.icon,
+        }
+      } else {
+        return {
+          id:squareCheck.id,
+          squareColor:squareCheck.squareColor,
+          piece: squareCheck.piece,
+          pieceColor: squareCheck.pieceColor,
+          icon: squareCheck.icon,
+        }
+      }
+    })
+  } else {//for normal moves
+    newSquares=squares.map((squareCheck) => {
+      if (squareCheck.id === newSquare.id) { 
+        //moves the piece to the new square
+        return {
+          id:squareCheck.id,
+          squareColor:squareCheck.squareColor,
+          piece: oldSquare.piece,
+          pieceColor: oldSquare.pieceColor,
+          icon: oldSquare.icon,
+        }
+      } else if  (squareCheck.id === oldSquare.id) {
+        //resets the square the piece is moving from
+        return {
+          id:squareCheck.id,
+          squareColor:squareCheck.squareColor,
+          piece: 0,
+          pieceColor: '',
+          icon: '',
+        }
+      } else {
+        return {
+          id:squareCheck.id,
+          squareColor:squareCheck.squareColor,
+          piece: squareCheck.piece,
+          pieceColor: squareCheck.pieceColor,
+          icon: squareCheck.icon,
+        }
+      }
+    })
+  }
+
+  return newSquares
+}
+
 function findMoves(square, squares, castling, enpassent) {
   var moves=[]
 
@@ -1013,8 +1168,6 @@ function getSquare(id, squares) {
     }
   }
 }
-
-//TODO make sure the move you make wont put you king in check
 
 function kingMove(square, squares, castling, enpassent) {
   var moves=[]
@@ -1127,10 +1280,10 @@ function kingMove(square, squares, castling, enpassent) {
   if(square.pieceColor && castling[1] && !isAttackedSafe(getSquare(62, squares), squares, castling, enpassent, true) && !isAttackedSafe(getSquare(63, squares), squares, castling, enpassent, true) && getSquare(62, squares).piece===0 && getSquare(63, squares).piece===0 && !inCheckSafe(squares, true, castling, enpassent)) {//white short
     moves.push(63)
   }
-  if(!square.pieceColor && castling[2] && !isAttackedSafe(getSquare(3, squares), squares, castling, enpassent, false) && !isAttackedSafe(getSquare(4, squares), squares, castling, enpassent, true) && getSquare(2, squares).piece===0 && getSquare(3, squares).piece===0 && getSquare(4, squares).piece===0 && !inCheckSafe(squares, false, castling, enpassent)) {//black long
+  if(!square.pieceColor && castling[2] && !isAttackedSafe(getSquare(3, squares), squares, castling, enpassent, false) && !isAttackedSafe(getSquare(4, squares), squares, castling, enpassent, false) && getSquare(2, squares).piece===0 && getSquare(3, squares).piece===0 && getSquare(4, squares).piece===0 && !inCheckSafe(squares, false, castling, enpassent)) {//black long
     moves.push(3)
   }
-  if(!square.pieceColor && castling[3] && !isAttackedSafe(getSquare(6, squares), squares, castling, enpassent, false) && !isAttackedSafe(getSquare(7, squares), squares, castling, enpassent, true) && getSquare(7, squares).piece===0 && getSquare(6, squares).piece===0 && !inCheckSafe(squares, false, castling, enpassent)) {//black short
+  if(!square.pieceColor && castling[3] && !isAttackedSafe(getSquare(6, squares), squares, castling, enpassent, false) && !isAttackedSafe(getSquare(7, squares), squares, castling, enpassent, false) && getSquare(7, squares).piece===0 && getSquare(6, squares).piece===0 && !inCheckSafe(squares, false, castling, enpassent)) {//black short
     moves.push(7)
   }
   //makes you can make a move to put yourself in check
@@ -1429,10 +1582,13 @@ function isOver(squares, turn, castling, enpassent) {
 
   for (const square of squares) {
     if (square.pieceColor === turn) {
-      moves.push(findMoves(square, squares, castling, enpassent))
+      moves = moves.concat(findMoves(square, squares, castling, enpassent))
     }
   }
 
+  console.log(turn)
+  console.log(moves.length)
+  console.log(moves)
   return moves.length === 0
 }
 
