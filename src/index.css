@@ -12,6 +12,18 @@ code {
     monospace;
 }
 
+.header {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-size: calc(4vmin);
+  color: #e1911b;
+  height: 5vmin;
+  margin:2vmin;
+  padding:0;
+}
+
 .App {
   text-align: center;
   display: flex;
@@ -22,7 +34,9 @@ code {
 }
 
 .game {
-  margin: 20vmin;
+  margin-right: 20vmin;
+  margin-left: 20vmin;
+  margin-bottom: 10vmin;
 }
 
 .board-row {
