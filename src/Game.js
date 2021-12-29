@@ -483,6 +483,8 @@ class Game extends React.Component {
       castling:[true,true,true,true],
       checkmate:false,
       stalemate:false,
+      draw:false,
+      move50:0,
     }
   }
 
@@ -544,6 +546,7 @@ class Game extends React.Component {
         moves:[],
         turn:!this.state.turn,
         enpassent: 0,
+        move50: 0
       })
     } else if(isCastle(square, this.state.selectedPiece[1])) { //for castling
 
@@ -633,6 +636,7 @@ class Game extends React.Component {
         ],
         moves:[],
         turn:!this.state.turn,
+        move50: this.state.move50+0.5
       })
     } else {//for normal moves
       this.setState({
@@ -677,11 +681,13 @@ class Game extends React.Component {
         ],
         moves:[],
         turn:!this.state.turn,
-        castling:changeCastle(this.state.selectedPiece[1], this.state.castling)
+        castling:changeCastle(this.state.selectedPiece[1], this.state.castling),
+        move50: (square.piece !== 0 || this.state.selectedPiece[1].piece === 1) ? 0 : this.state.move50 + 0.5,
       })
     }
 
     var newSquares = pretendMove(square, this.state.selectedPiece[1], this.state.squares, this.state.enpassent)
+    var newMove50 = (square.piece !== 0 || this.state.selectedPiece[1].piece === 1) ? 0 : this.state.move50+0.5
     if(isOver(newSquares, !this.state.turn, this.state.castling, this.state.enpassent)) {
      //do smth to stop play
      if (inCheck(newSquares, !this.state.turn, this.state.castling, this.state.enpassent)) {
@@ -691,8 +697,8 @@ class Game extends React.Component {
        //stalemate
        this.setState({ stalemate:true })
      }
-   } else {
-     console.log('not over')
+   } else if(newMove50===50) {
+    this.setState({ draw:true })
    }
   }
 
@@ -768,7 +774,7 @@ class Game extends React.Component {
   render() {
     return (
       <div className='App'>
-        <h1 className='header'>{this.state.checkmate ? 'Checkmate!' : (this.state.stalemate ? 'Stalemate' : (this.state.turn ? 'White\'s Turn' : 'Black\'s Turn'))}</h1>
+        <h1 className='header'>{this.state.draw ? 'Draw' : (this.state.checkmate ? 'Checkmate!' : (this.state.stalemate ? 'Stalemate' : (this.state.turn ? 'White\'s Turn' : 'Black\'s Turn')))}</h1>
         <div className="game">
           <Board 
             squares={this.state.squares}
