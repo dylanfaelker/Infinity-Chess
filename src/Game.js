@@ -485,6 +485,7 @@ class Game extends React.Component {
       stalemate:false,
       draw:false,
       move50:0,
+      history:[],
     }
   }
 
@@ -496,6 +497,7 @@ class Game extends React.Component {
   makeMove(square) {
     if (isEnpassent(square, this.state.selectedPiece[1])) {//for enpassent moves
       this.setState({
+        history:this.state.history.concat([this.state.squares]),
         squares: this.state.squares.map((squareCheck) => {
           if (squareCheck.id === square.id) { 
             //moves the piece to the new square
@@ -546,7 +548,7 @@ class Game extends React.Component {
         moves:[],
         turn:!this.state.turn,
         enpassent: 0,
-        move50: 0
+        move50: 0,
       })
     } else if(isCastle(square, this.state.selectedPiece[1])) { //for castling
 
@@ -578,6 +580,7 @@ class Game extends React.Component {
       }
 
       this.setState({
+        history:this.state.history.concat([this.state.squares]),
         castling: this.state.selectedPiece[1].pieceColor ? [false, false, this.state.castling[2], this.state.castling[3]] : [this.state.castling[0], this.state.castling[1], false, false],
         enpassent: 0,
         squares: this.state.squares.map((squareCheck) => {
@@ -636,10 +639,11 @@ class Game extends React.Component {
         ],
         moves:[],
         turn:!this.state.turn,
-        move50: this.state.move50+0.5
+        move50: this.state.move50+0.5,
       })
     } else {//for normal moves
       this.setState({
+        history:this.state.history.concat([this.state.squares]),
         enpassent: (Math.abs(square.id-this.state.selectedPiece[1].id)===16 && this.state.selectedPiece[1].piece===1) ? square.id : 0,
         squares: this.state.squares.map((squareCheck) => {
           if (squareCheck.id === square.id) { 
@@ -691,13 +695,13 @@ class Game extends React.Component {
     if(isOver(newSquares, !this.state.turn, this.state.castling, this.state.enpassent)) {
      //do smth to stop play
      if (inCheck(newSquares, !this.state.turn, this.state.castling, this.state.enpassent)) {
-       //!turn wins
+       //turn wins
        this.setState({ checkmate:true })
      } else {
        //stalemate
        this.setState({ stalemate:true })
      }
-   } else if(newMove50===50) {
+   } else if(newMove50===50 || numAppears(newSquares, this.state.history) >= 2) {
     this.setState({ draw:true })
    }
   }
@@ -786,6 +790,38 @@ class Game extends React.Component {
       </div>
     );
   }
+}
+
+//returns the number of times a position has already been reached
+function numAppears(squares, history) {
+  var count = 0
+  for (const squaresCheck of history) {
+    if(comapareBoards(squares, squaresCheck)) {
+      count++
+    }
+  }
+
+  return count
+}
+
+//determines if two boards are the same or not
+function comapareBoards(squares1, squares2) {
+  for(const square of squares1) {
+    if(!inSquares(square, squares2)) {
+      return false
+    }
+  }
+  return true
+}
+
+//checks if there is a replica of square in squares
+function inSquares(square, squares) {
+  for(const squareCheck of squares) {
+    if(square.id===squareCheck.id && square.piece===squareCheck.piece && square.pieceColor===squareCheck.pieceColor) {
+      return true
+    }
+  }
+  return false
 }
 
 function changeCastle(oldSquare, castling) {
@@ -1593,10 +1629,6 @@ function isOver(squares, turn, castling, enpassent) {
       moves = moves.concat(findMoves(square, squares, castling, enpassent))
     }
   }
-
-  console.log(turn)
-  console.log(moves.length)
-  console.log(moves)
   return moves.length === 0
 }
 
