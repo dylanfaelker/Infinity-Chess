@@ -81,8 +81,8 @@ code {
   flex-direction: column;
   justify-content: center;
   align-items: center; 
-  background-color: #4aac2c;
-  border: 1px solid #367922;
+  background-color: #308897;
+  border: 1px solid #143b70;
 }
 
 .square-chosen {
@@ -94,8 +94,8 @@ code {
   flex-direction: column;
   justify-content: center;
   align-items: center; 
-  background-color: #408b29;
-  border: 1px solid #2d631d;
+  background-color: #d49d06;
+  border: 1px solid #c49411;
 }
 
 .piece-img {

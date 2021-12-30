@@ -1,17 +1,17 @@
 import React, { useState } from 'react'
 import Board from './components/Board'
-import bbishop from './bbishop.png'
-import wbishop from './wbishop.png'
-import bknight from './bknight.png'
-import wknight from './wknight.png'
-import brook from './brook.png'
-import wrook from './wrook.png'
-import bking from './bking.png'
-import wking from './wking.png'
-import bqueen from './bqueen.png'
-import wqueen from './wqueen.png'
-import bpawn from './bpawn.png'
-import wpawn from './wpawn.png'
+import bbishop from './chessIcons/bbishop.png'
+import wbishop from './chessIcons/wbishop.png'
+import bknight from './chessIcons/bknight.png'
+import wknight from './chessIcons/wknight.png'
+import brook from './chessIcons/brook.png'
+import wrook from './chessIcons/wrook.png'
+import bking from './chessIcons/bking.png'
+import wking from './chessIcons/wking.png'
+import bqueen from './chessIcons/bqueen.png'
+import wqueen from './chessIcons/wqueen.png'
+import bpawn from './chessIcons/bpawn.png'
+import wpawn from './chessIcons/wpawn.png'
 import { isCompositeComponent } from 'react-dom/cjs/react-dom-test-utils.production.min'
 
 class Game extends React.Component {
@@ -506,9 +506,11 @@ class Game extends React.Component {
   }
 
   //called when a square has been clicked on
-  //determines if the user is trying to make a move or select a piece
+  //determines if the game is still being played and if the user is trying to make a move or select a piece
   selecting(square) {
-    this.state.selectedPiece[0] ? this.checkMove(square) : this.pickPiece(square)
+    (this.state.checkmate || this.state.stalemate || this.state.draw) ? 
+      this.unselect() :
+      (this.state.selectedPiece[0] ? this.checkMove(square) : this.pickPiece(square))
   }
 
   //called when a piece is being moved to a legal square
