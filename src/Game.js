@@ -532,7 +532,6 @@ class Game extends React.Component {
   //called when a piece is being moved to a legal square
   //updates the board and game state variables
   makeMove(square) {
-    console.log(isPromotion(this.state.selectedPiece[1]))
 
     //------updating board, and game states other than those which singify the end of the game------
     if (isEnpassent(square, this.state.selectedPiece[1])) {//for enpassent moves
