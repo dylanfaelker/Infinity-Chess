@@ -12,7 +12,6 @@ import bqueen from './chessIcons/bqueen.png'
 import wqueen from './chessIcons/wqueen.png'
 import bpawn from './chessIcons/bpawn.png'
 import wpawn from './chessIcons/wpawn.png'
-import Buttons from './components/Buttons'
 import { isCompositeComponent } from 'react-dom/cjs/react-dom-test-utils.production.min'
 
 class Game extends React.Component {
@@ -504,9 +503,7 @@ class Game extends React.Component {
       //keeps track of all board states already reached to determine if a postition has been reach 3 times already
       history:[],
       //determines if game is waiting for a promotion piece to be chosen
-      promoting:true,
-      //determines the pormotion piece
-      promotion:0,
+      promoting:false,
       //saves the move that was being made when asking about promotion
       promoteSavedSquare: {
         id:0,
@@ -515,41 +512,28 @@ class Game extends React.Component {
         pieceColor: true,
         icon: '',
       },
-      buttons:[{
-        id:1,
-        name:'Queen',
-        piece:5
-      },
-      {
-        id:2,
-        name:'Rook',
-        piece:4
-      },
-      {
-        id:3,
-        name:'Knight',
-        piece:3
-      },
-      {
-        id:4,
-        name:'Bishop',
-        piece:2
-      }]
 
     }
   }
 
+  //a function that does nothing
+  nothing() {}
+
   //called when a square has been clicked on
   //determines if the game is still being played and if the user is trying to make a move or select a piece
   selecting(square) {
-    (this.state.checkmate || this.state.stalemate || this.state.draw || this.state.promoting) ? 
-      this.unselect() :
-      (this.state.selectedPiece[0] ? this.checkMove(square) : this.pickPiece(square))
+    (this.state.promoting ?
+      (this.nothing()) : //random function that does actually nothin
+      ((this.state.checkmate || this.state.stalemate || this.state.draw) ? 
+        this.unselect() :
+        (this.state.selectedPiece[0] ? this.checkMove(square) : this.pickPiece(square))))
   }
 
   //called when a piece is being moved to a legal square
   //updates the board and game state variables
   makeMove(square) {
+    console.log(isPromotion(this.state.selectedPiece[1]))
+
     //------updating board, and game states other than those which singify the end of the game------
     if (isEnpassent(square, this.state.selectedPiece[1])) {//for enpassent moves
       this.setState({
@@ -715,8 +699,6 @@ class Game extends React.Component {
         move50: this.state.move50+0.5,
       })
     } else if(isPromotion(this.state.selectedPiece[1])) {//for promoting
-      
-      //TODO when promoting, dont update game ending stuff and do it after promotion in promotion func
 
       //saves move data and waits for promotion to be chosen
       this.setState({ promoting:true, promoteSavedSquare:{
@@ -782,7 +764,7 @@ class Game extends React.Component {
     }
 
     //------updates the game ending game states------
-    if(isPromotion(this.state.selectedPiece[1])) { //TODO do this after promotion if promoting
+    if(!isPromotion(this.state.selectedPiece[1])) {
       //makes a new board where the move is made and able to be used
       var newSquares = pretendMove(square, this.state.selectedPiece[1], this.state.squares, this.state.enpassent)
       //determines the new 50 move rule count after the previous is made
@@ -875,6 +857,8 @@ class Game extends React.Component {
   }
 
   pickPromotion(piece){
+
+    //----------updates board state ------------
     if(this.state.selectedPiece[1].pieceColor){//white
       switch (piece) {
         case 2: //bishop
@@ -1378,6 +1362,26 @@ class Game extends React.Component {
           break;
       }
     }
+
+    //----------updates game ending states -------------
+
+    //makes a new board where the move is made and able to be used
+    var newSquares = pretendPromotion(this.state.promoteSavedSquare, this.state.selectedPiece[1], this.state.squares, this.state.enpassent, piece)
+
+    //determines if the next player has any moves
+    if(isOver(newSquares, !this.state.turn, this.state.castling, this.state.enpassent)) {
+    
+      //determines if it is checkmate or stalemate
+      if (inCheck(newSquares, !this.state.turn, this.state.castling, this.state.enpassent)) {
+      //turn wins
+      this.setState({ checkmate:true })
+      } else {
+      //stalemate
+      this.setState({ stalemate:true })
+      }
+
+      //Note: you can reach a draw after promoting because you mved a pawn and you couldnt have reached an old position
+    }
   }
 
   render() {
@@ -1385,6 +1389,36 @@ class Game extends React.Component {
       <div className='App'>
         {/*determines what to display above the board: will say whos turn or the result of the game */}
         <h1 className='header'>{this.state.draw ? 'Draw' : (this.state.checkmate ? 'Checkmate!' : (this.state.stalemate ? 'Stalemate' : (this.state.turn ? 'White\'s Turn' : 'Black\'s Turn')))}</h1>
+        
+        {/* Promotion buttons which appear only when promoting */}
+        {this.state.promoting ? 
+          <div className='buttons'>
+            <button
+              onClick={() => this.pickPromotion(5)}
+              className='btn'
+            >
+              {'Queen'}
+            </button>
+            <button
+              onClick={() => this.pickPromotion(4)}
+              className='btn'
+            >
+              {'Rook'}
+            </button>
+            <button
+              onClick={() => this.pickPromotion(3)}
+              className='btn'
+            >
+              {'Knight'}
+            </button>
+            <button
+              onClick={() => this.pickPromotion(2)}
+              className='btn'
+            >
+              {'Bishop'}
+            </button>
+          </div> : <div></div>} 
+        
         <div className="game">
           <Board 
             //data about each square
@@ -1397,8 +1431,6 @@ class Game extends React.Component {
             selectedNum={this.state.selectedPiece[1].id}
           />
         </div>
-        {/* TODO how do i pass in the onClick properly */}
-        {this.state.promoting ? <Buttons buttons={this.state.buttons} onClick={(piece) => this.pickPromotion(piece)}/> : <div></div>} 
       </div>
     );
   }
@@ -1680,7 +1712,6 @@ function testMove(newSquare, oldSquare, squares, castling, enpassent, turn) {
   return !inCheckSafe(newSquares, turn, newCastling, newEnpassent)
 }
 
-//TODO fix with promotion stuff
 //returns a board with a move actually made
 function pretendMove(newSquare, oldSquare, squares, enpassent) {
   var newSquares
@@ -1829,6 +1860,254 @@ function pretendMove(newSquare, oldSquare, squares, enpassent) {
         }
       }
     })
+  }
+
+  return newSquares
+}
+
+//returns a board with the promotion move actually made
+function pretendPromotion(newSquare, oldSquare, squares, enpassent, proPiece) {
+  var newSquares
+
+  //makes a move and updates board, same as what is done in the makeMove function
+  if(oldSquare.pieceColor){//white
+    switch (proPiece) {
+      case 2: //bishop
+        newSquares= squares.map((squareCheck) => {
+          if (squareCheck.id === newSquare.id) { //moves the piece to the new square
+            return {
+              id:squareCheck.id,
+              squareColor:squareCheck.squareColor,
+              piece: 2,
+              pieceColor: oldSquare.pieceColor,
+              icon: <img src={wbishop} className="piece-img" alt="wbishop"/>,
+            }
+          } else if  (squareCheck.id === oldSquare.id) {//resets the square the piece is moving from
+            return {
+              id:squareCheck.id,
+              squareColor:squareCheck.squareColor,
+              piece: 0,
+              pieceColor: '',
+              icon: '',
+            }
+          } else { //stays the same if the square is unaffected by the move
+            return {
+              id:squareCheck.id,
+              squareColor:squareCheck.squareColor,
+              piece: squareCheck.piece,
+              pieceColor: squareCheck.pieceColor,
+              icon: squareCheck.icon,
+            }
+          }
+        })
+        break;
+      case 3: //knight
+        newSquares= squares.map((squareCheck) => {
+          if (squareCheck.id === newSquare.id) { //moves the piece to the new square
+            return {
+              id:squareCheck.id,
+              squareColor:squareCheck.squareColor,
+              piece: 3,
+              pieceColor: oldSquare.pieceColor,
+              icon: <img src={wknight} className="piece-img" alt="wknight"/>,
+            }
+          } else if  (squareCheck.id === oldSquare.id) {//resets the square the piece is moving from
+            return {
+              id:squareCheck.id,
+              squareColor:squareCheck.squareColor,
+              piece: 0,
+              pieceColor: '',
+              icon: '',
+            }
+          } else { //stays the same if the square is unaffected by the move
+            return {
+              id:squareCheck.id,
+              squareColor:squareCheck.squareColor,
+              piece: squareCheck.piece,
+              pieceColor: squareCheck.pieceColor,
+              icon: squareCheck.icon,
+            }
+          }
+        })
+        break;
+      case 4: //rook
+        newSquares= squares.map((squareCheck) => {
+          if (squareCheck.id === newSquare.id) { //moves the piece to the new square
+            return {
+              id:squareCheck.id,
+              squareColor:squareCheck.squareColor,
+              piece: 4,
+              pieceColor: oldSquare.pieceColor,
+              icon: <img src={wrook} className="piece-img" alt="wrook"/>,
+            }
+          } else if  (squareCheck.id === oldSquare.id) {//resets the square the piece is moving from
+            return {
+              id:squareCheck.id,
+              squareColor:squareCheck.squareColor,
+              piece: 0,
+              pieceColor: '',
+              icon: '',
+            }
+          } else { //stays the same if the square is unaffected by the move
+            return {
+              id:squareCheck.id,
+              squareColor:squareCheck.squareColor,
+              piece: squareCheck.piece,
+              pieceColor: squareCheck.pieceColor,
+              icon: squareCheck.icon,
+            }
+          }
+        })
+        break;
+      case 5: //queen
+        newSquares= squares.map((squareCheck) => {
+          if (squareCheck.id === newSquare.id) { //moves the piece to the new square
+            return {
+              id:squareCheck.id,
+              squareColor:squareCheck.squareColor,
+              piece: 5,
+              pieceColor: oldSquare.pieceColor,
+              icon: <img src={wqueen} className="piece-img" alt="wqueen"/>,
+            }
+          } else if  (squareCheck.id === oldSquare.id) {//resets the square the piece is moving from
+            return {
+              id:squareCheck.id,
+              squareColor:squareCheck.squareColor,
+              piece: 0,
+              pieceColor: '',
+              icon: '',
+            }
+          } else { //stays the same if the square is unaffected by the move
+            return {
+              id:squareCheck.id,
+              squareColor:squareCheck.squareColor,
+              piece: squareCheck.piece,
+              pieceColor: squareCheck.pieceColor,
+              icon: squareCheck.icon,
+            }
+          }
+        })
+        break;
+    }
+  } else {//black
+    switch (proPiece) {
+      case 2: //bishop
+        newSquares= squares.map((squareCheck) => {
+          if (squareCheck.id === newSquare.id) { //moves the piece to the new square
+            return {
+              id:squareCheck.id,
+              squareColor:squareCheck.squareColor,
+              piece: 2,
+              pieceColor: oldSquare.pieceColor,
+              icon: <img src={bbishop} className="piece-img" alt="bbishop"/>,
+            }
+          } else if  (squareCheck.id === oldSquare.id) {//resets the square the piece is moving from
+            return {
+              id:squareCheck.id,
+              squareColor:squareCheck.squareColor,
+              piece: 0,
+              pieceColor: '',
+              icon: '',
+            }
+          } else { //stays the same if the square is unaffected by the move
+            return {
+              id:squareCheck.id,
+              squareColor:squareCheck.squareColor,
+              piece: squareCheck.piece,
+              pieceColor: squareCheck.pieceColor,
+              icon: squareCheck.icon,
+            }
+          }
+        })
+        break;
+      case 3: //knight
+        newSquares= squares.map((squareCheck) => {
+          if (squareCheck.id === newSquare.id) { //moves the piece to the new square
+            return {
+              id:squareCheck.id,
+              squareColor:squareCheck.squareColor,
+              piece: 3,
+              pieceColor: oldSquare.pieceColor,
+              icon: <img src={bknight} className="piece-img" alt="bknight"/>,
+            }
+          } else if  (squareCheck.id === oldSquare.id) {//resets the square the piece is moving from
+            return {
+              id:squareCheck.id,
+              squareColor:squareCheck.squareColor,
+              piece: 0,
+              pieceColor: '',
+              icon: '',
+            }
+          } else { //stays the same if the square is unaffected by the move
+            return {
+              id:squareCheck.id,
+              squareColor:squareCheck.squareColor,
+              piece: squareCheck.piece,
+              pieceColor: squareCheck.pieceColor,
+              icon: squareCheck.icon,
+            }
+          }
+        })
+        break;
+      case 4: //rook
+        newSquares= squares.map((squareCheck) => {
+          if (squareCheck.id === newSquare.id) { //moves the piece to the new square
+            return {
+              id:squareCheck.id,
+              squareColor:squareCheck.squareColor,
+              piece: 4,
+              pieceColor: oldSquare.pieceColor,
+              icon: <img src={brook} className="piece-img" alt="brook"/>,
+            }
+          } else if  (squareCheck.id === oldSquare.id) {//resets the square the piece is moving from
+            return {
+              id:squareCheck.id,
+              squareColor:squareCheck.squareColor,
+              piece: 0,
+              pieceColor: '',
+              icon: '',
+            }
+          } else { //stays the same if the square is unaffected by the move
+            return {
+              id:squareCheck.id,
+              squareColor:squareCheck.squareColor,
+              piece: squareCheck.piece,
+              pieceColor: squareCheck.pieceColor,
+              icon: squareCheck.icon,
+            }
+          }
+        })
+        break;
+      case 5: //queen
+        newSquares= squares.map((squareCheck) => {
+          if (squareCheck.id === newSquare.id) { //moves the piece to the new square
+            return {
+              id:squareCheck.id,
+              squareColor:squareCheck.squareColor,
+              piece: 5,
+              pieceColor: oldSquare.pieceColor,
+              icon: <img src={bqueen} className="piece-img" alt="bqueen"/>,
+            }
+          } else if  (squareCheck.id === oldSquare.id) {//resets the square the piece is moving from
+            return {
+              id:squareCheck.id,
+              squareColor:squareCheck.squareColor,
+              piece: 0,
+              pieceColor: '',
+              icon: '',
+            }
+          } else { //stays the same if the square is unaffected by the move
+            return {
+              id:squareCheck.id,
+              squareColor:squareCheck.squareColor,
+              piece: squareCheck.piece,
+              pieceColor: squareCheck.pieceColor,
+              icon: squareCheck.icon,
+            }
+          }
+        })
+        break;
+    }
   }
 
   return newSquares

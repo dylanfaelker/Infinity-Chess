@@ -47,6 +47,10 @@ code {
   font-family: inherit;
 }
 
+.buttons {
+  margin:1vmin;
+}
+
 .game {
   margin-right: 20vmin;
   margin-left: 20vmin;
