@@ -512,6 +512,9 @@ class Game extends React.Component {
         pieceColor: true,
         icon: '',
       },
+      wcheck:0,
+      bcheck:0,
+      lastmove:0,
 
     }
   }
@@ -764,10 +767,14 @@ class Game extends React.Component {
 
     //------updates the game ending game states------
     if(!isPromotion(this.state.selectedPiece[1])) {
+
       //makes a new board where the move is made and able to be used
       var newSquares = pretendMove(square, this.state.selectedPiece[1], this.state.squares, this.state.enpassent)
       //determines the new 50 move rule count after the previous is made
       var newMove50 = (square.piece !== 0 || this.state.selectedPiece[1].piece === 1) ? 0 : this.state.move50+0.5
+
+      this.setState({ lastmove: square.id, wcheck: this.findCheck(true, newSquares), bcheck: this.findCheck(false, newSquares) })
+      console.log(this.findCheck(false, newSquares))
 
       //determines if the next player has any moves
       if(isOver(newSquares, !this.state.turn, this.state.castling, this.state.enpassent)) {
@@ -783,6 +790,16 @@ class Game extends React.Component {
       //determines of there is a draw by repitition or 50 move rule
       } else if(newMove50===50 || numAppears(newSquares, this.state.history) >= 2) {
         this.setState({ draw:true })
+      }
+    }
+  }
+
+  findCheck(turn, newSquares) {
+    for(const square of this.state.squares) {
+      if(square.piece === 6 && square.pieceColor === turn) {
+        var check=inCheck(newSquares, turn, this.state.castling, this.state.enpassent)
+        console.log(check)
+        return check ? square.id : 0
       }
     }
   }
@@ -1364,6 +1381,8 @@ class Game extends React.Component {
 
     //----------updates game ending states -------------
 
+    this.setState({ lastMove: this.state.promoteSavedSquare.id, wcheck: this.findCheck(true), bcheck: this.findCheck(false) })
+
     //makes a new board where the move is made and able to be used
     var newSquares = pretendPromotion(this.state.promoteSavedSquare, this.state.selectedPiece[1], this.state.squares, this.state.enpassent, piece)
 
@@ -1387,7 +1406,7 @@ class Game extends React.Component {
     return (
       <div className='App'>
         {/*determines what to display above the board: will say whos turn or the result of the game */}
-        <h1 className='header'>{this.state.draw ? 'Draw' : (this.state.checkmate ? 'Checkmate!' : (this.state.stalemate ? 'Stalemate' : (this.state.turn ? 'White\'s Turn' : 'Black\'s Turn')))}</h1>
+        <h1 className='game-info'>{this.state.draw ? 'Draw' : (this.state.checkmate ? 'Checkmate!' : (this.state.stalemate ? 'Stalemate' : (this.state.turn ? 'White\'s Turn' : 'Black\'s Turn')))}</h1>
         
         {/* Promotion buttons which appear only when promoting */}
         {this.state.promoting ? 
@@ -1428,6 +1447,9 @@ class Game extends React.Component {
             moves={this.state.moves}
             //data for which square is selected
             selectedNum={this.state.selectedPiece[1].id}
+            lastMove={this.state.lastmove}
+            wcheck={this.state.wcheck}
+            bcheck={this.state.bcheck}
           />
         </div>
       </div>
