@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import Board from './components/Board'
 import bbishop from './chessIcons/bbishop.png'
 import wbishop from './chessIcons/wbishop.png'
@@ -12,7 +12,6 @@ import bqueen from './chessIcons/bqueen.png'
 import wqueen from './chessIcons/wqueen.png'
 import bpawn from './chessIcons/bpawn.png'
 import wpawn from './chessIcons/wpawn.png'
-import { isCompositeComponent } from 'react-dom/cjs/react-dom-test-utils.production.min'
 
 class Game extends React.Component {
   constructor(props) {
@@ -774,7 +773,6 @@ class Game extends React.Component {
       var newMove50 = (square.piece !== 0 || this.state.selectedPiece[1].piece === 1) ? 0 : this.state.move50+0.5
 
       this.setState({ lastmove: square.id, wcheck: this.findCheck(true, newSquares), bcheck: this.findCheck(false, newSquares) })
-      console.log(this.findCheck(false, newSquares))
 
       //determines if the next player has any moves
       if(isOver(newSquares, !this.state.turn, this.state.castling, this.state.enpassent)) {
@@ -798,7 +796,6 @@ class Game extends React.Component {
     for(const square of this.state.squares) {
       if(square.piece === 6 && square.pieceColor === turn) {
         var check=inCheck(newSquares, turn, this.state.castling, this.state.enpassent)
-        console.log(check)
         return check ? square.id : 0
       }
     }
@@ -1125,6 +1122,8 @@ class Game extends React.Component {
             }
           })
           break;
+        default:
+          break;
       }
     } else {//black
       switch (piece) {
@@ -1376,15 +1375,17 @@ class Game extends React.Component {
             }
           })
           break;
+        default:
+          break;
       }
     }
 
     //----------updates game ending states -------------
 
-    this.setState({ lastMove: this.state.promoteSavedSquare.id, wcheck: this.findCheck(true), bcheck: this.findCheck(false) })
-
     //makes a new board where the move is made and able to be used
     var newSquares = pretendPromotion(this.state.promoteSavedSquare, this.state.selectedPiece[1], this.state.squares, this.state.enpassent, piece)
+
+    this.setState({ lastmove: this.state.promoteSavedSquare.id, wcheck: this.findCheck(true, newSquares), bcheck: this.findCheck(false, newSquares) })
 
     //determines if the next player has any moves
     if(isOver(newSquares, !this.state.turn, this.state.castling, this.state.enpassent)) {
@@ -2009,6 +2010,8 @@ function pretendPromotion(newSquare, oldSquare, squares, enpassent, proPiece) {
           }
         })
         break;
+      default:
+        break;
     }
   } else {//black
     switch (proPiece) {
@@ -2128,6 +2131,8 @@ function pretendPromotion(newSquare, oldSquare, squares, enpassent, proPiece) {
           }
         })
         break;
+      default:
+        break;
     }
   }
 
@@ -2159,6 +2164,8 @@ function findMoves(square, squares, castling, enpassent) {
     case 6: //king
       moves=kingMove(square, squares, castling, enpassent)
       break;
+    default:
+      break;
   }
 
   return moves
@@ -2178,9 +2185,10 @@ function kingMove(square, squares, castling, enpassent) {
   var moves=[]
   var num=square.id
 
+  var newNum
   //adds all standard moves to the list
   if((num-1) %8 === 0) {//when infinity wraps on the left side
-    var newNum=num+1
+    newNum=num+1
     if(newNum>=1 && newNum<=64 && getSquare(newNum, squares).pieceColor !== square.pieceColor){
       moves.push(newNum)
     }
@@ -2213,7 +2221,7 @@ function kingMove(square, squares, castling, enpassent) {
       moves.push(newNum)
     }
   } else if ((num-1) %8 === 7) {//when infinity wraps on the right side
-    var newNum=num-7
+    newNum=num-7
     if(newNum>=1 && newNum<=64 && getSquare(newNum, squares).pieceColor !== square.pieceColor){
       moves.push(newNum)
     }
@@ -2246,7 +2254,7 @@ function kingMove(square, squares, castling, enpassent) {
       moves.push(newNum)
     }
   } else {//when no wrapping is occuring
-    var newNum=num+1
+    newNum=num+1
     if(newNum>=1 && newNum<=64 && getSquare(newNum, squares).pieceColor !== square.pieceColor){
       moves.push(newNum)
     }
@@ -2563,7 +2571,7 @@ function pawnMove(square, squares, castling, enpassent) {
      moves.push(num-8)
     }
     //checks if the pawn can be pushed forward 2 sqaures
-    if(row===7 && getSquare(num-16, squares).piece===0)  {
+    if(row===7 && getSquare(num-16, squares).piece===0 && getSquare(num-8, squares).piece===0)  {
       moves.push(num-16)
     }
     //checks if the pawn can take a piece diagonally left of it
@@ -2589,7 +2597,7 @@ function pawnMove(square, squares, castling, enpassent) {
       moves.push(num+8)
     }
     //checks if the pawn can be pushed forward 2 sqaures
-    if(row===2 && getSquare(num+16, squares).piece===0)  {
+    if(row===2 && getSquare(num+16, squares).piece===0 && getSquare(num+8, squares).piece===0)  {
        moves.push(num+16)
     }
     //checks if the pawn can take a piece diagonally right of it
@@ -2640,7 +2648,7 @@ function inCheck(squares, turn, castling, enpassent) {
 
 //determiens if a certain square is attacked by not '!turn'
 function isAttacked(square, squares, castling, enpassent, turn) {
-  var color = turn
+  // var color = turn
   var oppColor= !turn
 
   // loops through all squares on the board
@@ -2691,7 +2699,7 @@ function inCheckSafe(squares, turn, castling, enpassent) {
 }
 
 function isAttackedSafe(square, squares, castling, enpassent, turn) {
-  var color = turn
+  // var color = turn
   var oppColor= !turn
 
   for (const squareCheck of squares) { // loops through all squares on the board
@@ -2729,7 +2737,9 @@ function findMovesSafe(square, squares, castling, enpassent) {
     case 6: //king
       moves=kingMoveSafe(square, squares, castling, enpassent)
       break;
-  }
+    default:
+      break;
+    }
 
   return moves
 }
@@ -2737,8 +2747,10 @@ function findMovesSafe(square, squares, castling, enpassent) {
 function kingMoveSafe(square, squares, castling, enpassent) {
   var moves=[]
   var num=square.id
+
+  var newNum
   if((num-1) %8 === 0) {//when wraps on the left side
-    var newNum=num+1
+    newNum=num+1
     if(newNum>=1 && newNum<=64 && getSquare(newNum, squares).pieceColor !== square.pieceColor){
       moves.push(newNum)
     }
@@ -2771,7 +2783,7 @@ function kingMoveSafe(square, squares, castling, enpassent) {
       moves.push(newNum)
     }
   } else if ((num-1) %8 === 7) {//when wraps on the right side
-    var newNum=num-7
+    newNum=num-7
     if(newNum>=1 && newNum<=64 && getSquare(newNum, squares).pieceColor !== square.pieceColor){
       moves.push(newNum)
     }
@@ -2804,7 +2816,7 @@ function kingMoveSafe(square, squares, castling, enpassent) {
       moves.push(newNum)
     }
   } else {
-    var newNum=num+1
+    newNum=num+1
     if(newNum>=1 && newNum<=64 && getSquare(newNum, squares).pieceColor !== square.pieceColor){
       moves.push(newNum)
     }
@@ -2852,7 +2864,7 @@ function pawnMoveSafe(square, squares, castling, enpassent) {
     if(getSquare(num-8, squares).piece===0) {
      moves.push(num-8)
     }
-    if(row===7 && getSquare(num-16, squares).piece===0)  {
+    if(row===7 && getSquare(num-16, squares).piece===0 && getSquare(num-8, squares).piece===0)  {
       moves.push(num-16)
     }
     if(getSquare(infinityLeft(num-9), squares).pieceColor === !square.pieceColor) {
@@ -2871,7 +2883,7 @@ function pawnMoveSafe(square, squares, castling, enpassent) {
     if(getSquare(num+8, squares).piece===0) {
       moves.push(num+8)
      }
-     if(row===2 && getSquare(num+16, squares).piece===0)  {
+     if(row===2 && getSquare(num+16, squares).piece===0 && getSquare(num+8, squares).piece===0)  {
        moves.push(num+16)
      }
     if(getSquare(infinityRight(num+9), squares).pieceColor === !square.pieceColor) {
